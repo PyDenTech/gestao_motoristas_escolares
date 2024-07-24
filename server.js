@@ -33,6 +33,15 @@ app.post('/api/login', async (req, res) => {
             if (isValid) {
                 const rotaResult = await pool.query('SELECT * FROM rotas WHERE id = $1', [user.rota_id]);
                 const rota = rotaResult.rows[0];
+
+                // Obter nomes das escolas
+                const escolasAtendidas = await Promise.all(
+                    rota.escolas_atendidas.map(async (escolaId) => {
+                        const escolaResult = await pool.query('SELECT nome FROM escolas WHERE id = $1', [escolaId]);
+                        return escolaResult.rows[0].nome;
+                    })
+                );
+
                 res.status(200).json({
                     message: 'Login bem-sucedido!',
                     user: {
@@ -40,7 +49,7 @@ app.post('/api/login', async (req, res) => {
                         rota: {
                             id: rota.id,
                             nome_rota: rota.nome_rota,
-                            escolas_atendidas: rota.escolas_atendidas
+                            escolas_atendidas: escolasAtendidas
                         }
                     }
                 });
@@ -54,7 +63,6 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
