@@ -31,7 +31,19 @@ app.post('/api/login', async (req, res) => {
             const user = result.rows[0];
             const isValid = await bcrypt.compare(senha, user.senha);
             if (isValid) {
-                res.status(200).json({ message: 'Login bem-sucedido!', userName: user.nome_completo });
+                const rotaResult = await pool.query('SELECT * FROM rotas WHERE id = $1', [user.rota_id]);
+                const rota = rotaResult.rows[0];
+                res.status(200).json({
+                    message: 'Login bem-sucedido!',
+                    user: {
+                        nome_completo: user.nome_completo,
+                        rota: {
+                            id: rota.id,
+                            nome_rota: rota.nome_rota,
+                            escolas_atendidas: rota.escolas_atendidas
+                        }
+                    }
+                });
             } else {
                 res.status(401).json({ message: 'Senha incorreta!' });
             }
@@ -42,6 +54,7 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
