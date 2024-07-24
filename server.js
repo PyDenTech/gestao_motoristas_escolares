@@ -76,23 +76,31 @@ app.post('/api/iniciar-rota', async (req, res) => {
     }
 });
 
-app.post('/api/finalizar-rota', async (req, res) => {
-    const { motorista_id, gpxData, distancia, tempo } = req.body;
+app.post('/api/iniciar-rota', async (req, res) => {
+    const { motorista_id } = req.body;
     try {
-        // Atualizar o status do motorista para "fora de serviço"
-        await pool.query('UPDATE motoristas_escolares SET status = $1 WHERE id = $2', ['fora de serviço', motorista_id]);
-
-        // Salvar o arquivo GPX
-        fs.writeFileSync(`./gpx_files/rota_${motorista_id}.gpx`, gpxData);
-
-        // Salvar os dados de distância e tempo
-        await pool.query('INSERT INTO rotas_registradas (motorista_id, distancia, tempo, gpx_path) VALUES ($1, $2, $3, $4)', [motorista_id, distancia, tempo, `./gpx_files/rota_${motorista_id}.gpx`]);
-
-        res.status(200).json({ message: 'Rota finalizada com sucesso!' });
+        // Atualiza o status do motorista para "em rota"
+        await pool.query('UPDATE motoristas_escolares SET status = $1 WHERE id = $2', ['em rota', motorista_id]);
+        res.status(200).json({ message: 'Rota iniciada com sucesso!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
+app.post('/api/salvar-rastreamento', async (req, res) => {
+    const { motorista_id, data, distancia_percorrida, tempo, gpx_data } = req.body;
+    try {
+        const result = await pool.query(
+            `INSERT INTO rastreamento (motorista_id, data, distancia_percorrida, tempo, gpx_data)
+             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [motorista_id, data, distancia_percorrida, tempo, gpx_data]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
