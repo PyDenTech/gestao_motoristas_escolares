@@ -45,6 +45,7 @@ app.post('/api/login', async (req, res) => {
                 res.status(200).json({
                     message: 'Login bem-sucedido!',
                     user: {
+                        id: user.id,
                         nome_completo: user.nome_completo,
                         rota: {
                             id: rota.id,
