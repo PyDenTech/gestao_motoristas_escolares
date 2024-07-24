@@ -31,7 +31,7 @@ app.post('/api/login', async (req, res) => {
             const user = result.rows[0];
             const isValid = await bcrypt.compare(senha, user.senha);
             if (isValid) {
-                res.status(200).json({ message: 'Login bem-sucedido!' });
+                res.status(200).json({ message: 'Login bem-sucedido!', userName: user.nome_completo });
             } else {
                 res.status(401).json({ message: 'Senha incorreta!' });
             }
